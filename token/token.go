@@ -17,7 +17,7 @@ const (
 
 	// Operator identifiers
 	ASSIGN = "="
-	PLUS   = "="
+	PLUS   = "+"
 
 	// Delimitiers
 	COMMA     = ","

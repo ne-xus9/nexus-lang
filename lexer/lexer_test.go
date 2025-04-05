@@ -1,7 +1,6 @@
 package lexer
 
 import (
-	"go/token"
 	"nexus/token"
 	"testing"
 )

@@ -18,6 +18,9 @@ const (
 	// Operator identifiers
 	ASSIGN = "="
 	PLUS   = "+"
+	SUBS   = "-"
+	DIV    = "/"
+	MULT   = "*"
 
 	// Delimitiers
 	COMMA     = ","
@@ -26,10 +29,23 @@ const (
 	RPAREN    = ")"
 	LBRACE    = "{"
 	RBRACE    = "}"
-	FUNCTION  = "FUNCTION" // fn
-	LET       = "LET"
-	RET       = "RETURN"
-	CON       = "CONST"
+
+	// Reserved words
+	FUNCTION = "FUNCTION"
+	LET      = "LET"
+	RET      = "RETURN"
+	CON      = "CONST"
+	IF       = "IF"
+	ELSE     = "ELSE"
+	TRUE     = "TRUE"
+	FALSE    = "FALSE"
+
+	// Conditionals
+	EQ  = "=="
+	NOT = "!"
+	NEQ = "!="
+	LT  = "<"
+	GT  = ">"
 )
 
 var keywords = map[string]TokenType{
@@ -37,6 +53,10 @@ var keywords = map[string]TokenType{
 	"let":    LET,
 	"return": RET,
 	"const":  CON,
+	"if":     IF,
+	"else":   ELSE,
+	"true":   TRUE,
+	"false":  FALSE,
 }
 
 func LookupIdent(ident string) TokenType {

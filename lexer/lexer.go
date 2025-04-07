@@ -5,60 +5,16 @@ import (
 )
 
 type Lexer struct {
-	input   string
-	pos     uint
-	readPos uint
-	ch      byte
+	input   string // Code source
+	pos     uint   // Buffer position
+	readPos uint   // Right limiter
+	ch      byte   // Actual character
 }
 
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
 	return l
-}
-
-func (l *Lexer) readChar() {
-	if l.readPos >= uint(len(l.input)) {
-		l.ch = 0
-	} else {
-		l.ch = l.input[l.readPos]
-	}
-	l.pos = l.readPos
-	l.readPos++
-}
-
-func newToken(tt token.TokenType, ch byte) token.Token {
-	return token.Token{Type: tt, Literal: string(ch)}
-}
-
-func (l *Lexer) readIdentifier() string {
-	pos := l.pos
-	for isLetter(l.ch) {
-		l.readChar()
-	}
-	return l.input[pos:l.pos]
-}
-
-func (l *Lexer) eatWhitespace() {
-	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
-		l.readChar()
-	}
-}
-
-func (l *Lexer) readNumber() string {
-	pos := l.pos
-	for isDigit(l.ch) {
-		l.readChar()
-	}
-	return l.input[pos:l.pos]
-}
-
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
-}
-
-func isDigit(ch byte) bool {
-	return '0' <= ch && ch <= '9'
 }
 
 func (l *Lexer) NextToken() token.Token {
@@ -68,7 +24,13 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '=':
-		t = newToken(token.ASSIGN, l.ch)
+		if l.peekNext() == '=' {
+			ch := l.ch
+			l.readChar()
+			t = token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
+		} else {
+			t = newToken(token.ASSIGN, l.ch)
+		}
 	case ';':
 		t = newToken(token.SEMICOLON, l.ch)
 	case '(':
@@ -83,6 +45,24 @@ func (l *Lexer) NextToken() token.Token {
 		t = newToken(token.RBRACE, l.ch)
 	case '+':
 		t = newToken(token.PLUS, l.ch)
+	case '-':
+		t = newToken(token.SUBS, l.ch)
+	case '*':
+		t = newToken(token.MULT, l.ch)
+	case '/':
+		t = newToken(token.DIV, l.ch)
+	case '<':
+		t = newToken(token.LT, l.ch)
+	case '>':
+		t = newToken(token.GT, l.ch)
+	case '!':
+		if l.peekNext() == '=' {
+			ch := l.ch
+			l.readChar()
+			t = token.Token{Type: token.NEQ, Literal: string(ch) + string(l.ch)}
+		} else {
+			t = newToken(token.NOT, l.ch)
+		}
 	case 0:
 		t.Literal = ""
 		t.Type = token.EOF

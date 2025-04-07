@@ -1,6 +1,8 @@
 package lexer
 
-import "nexus/token"
+import (
+	"nexus/token"
+)
 
 type Lexer struct {
 	input   string
@@ -29,8 +31,40 @@ func newToken(tt token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tt, Literal: string(ch)}
 }
 
+func (l *Lexer) readIdentifier() string {
+	pos := l.pos
+	for isLetter(l.ch) {
+		l.readChar()
+	}
+	return l.input[pos:l.pos]
+}
+
+func (l *Lexer) eatWhitespace() {
+	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+		l.readChar()
+	}
+}
+
+func (l *Lexer) readNumber() string {
+	pos := l.pos
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[pos:l.pos]
+}
+
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func isDigit(ch byte) bool {
+	return '0' <= ch && ch <= '9'
+}
+
 func (l *Lexer) NextToken() token.Token {
 	var t token.Token
+
+	l.eatWhitespace()
 
 	switch l.ch {
 	case '=':
@@ -52,6 +86,18 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		t.Literal = ""
 		t.Type = token.EOF
+	default:
+		if isLetter(l.ch) {
+			t.Literal = l.readIdentifier()
+			t.Type = token.LookupIdent(t.Literal)
+			return t
+		} else if isDigit(l.ch) {
+			t.Type = token.INT
+			t.Literal = l.readNumber()
+			return t
+		} else {
+			t = newToken(token.ILLEGAL, l.ch)
+		}
 	}
 	l.readChar()
 	return t

@@ -77,3 +77,57 @@ func checkParserErrors(t *testing.T, p *Parser) {
 	}
 	t.FailNow()
 }
+
+func TestReturnStatement(t *testing.T) {
+	input := `
+		return 5;
+		return variable;
+		return 0;
+	`
+	lex := lexer.New(input)
+	parser := New(lex)
+	prog := parser.ParseProgram()
+
+	checkParserErrors(t, parser)
+	if len(prog.Statements) != 3 {
+		t.Fatalf("prog.Statements does not contain 3 statements. got=%d", len(prog.Statements))
+	}
+
+	for _, val := range prog.Statements {
+		stmt, ok := val.(*ast.ReturnStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.ReturnStatment. got=%T", stmt)
+		}
+
+		if stmt.TokenLiteral() != "return" {
+			t.Errorf("stmt.TokenLiteral not 'return'. got=%q", stmt.TokenLiteral())
+		}
+	}
+}
+
+func TestConstStatement(t *testing.T) {
+	input := `
+		const MINUTES = 5;
+		const SECRET_NUM = 20;
+		const __PRIVATE_CONST = 0;
+	`
+	lex := lexer.New(input)
+	parser := New(lex)
+	prog := parser.ParseProgram()
+
+	checkParserErrors(t, parser)
+	if len(prog.Statements) != 3 {
+		t.Fatalf("prog.Statements does not contain 3 statements. got=%d", len(prog.Statements))
+	}
+
+	for _, val := range prog.Statements {
+		stmt, ok := val.(*ast.ConstStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.ConstStatement. got=%T", stmt)
+		}
+
+		if stmt.TokenLiteral() != "const" {
+			t.Errorf("stmt.TokenLiteral not 'const'. got=%q", stmt.TokenLiteral())
+		}
+	}
+}

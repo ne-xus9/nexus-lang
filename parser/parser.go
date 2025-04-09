@@ -47,6 +47,10 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.currToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.CON:
+		return p.parseConstStatement()
+	case token.RET:
+		return p.parseReturnStatement()
 	default:
 		return nil
 	}
@@ -56,6 +60,38 @@ func (p *Parser) parseLetStatement() ast.Statement {
 	stmt := &ast.LetStatement{Token: p.currToken} // this looks like recursive leaves
 	// This function should be called only on
 	// statements which start with 'let'
+
+	// After, requires an identifier, otherwise fails
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+
+	// Assigns an Identifier node to this statement,
+	// with the Token: token.Identifier
+	// and Value: p.currToken.Literal,
+	// which is the identifier name
+	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+
+	// After the identifier, requires a = sign,
+	// if it does not exist, break and fail.
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+
+	// Keep reading until there is a semicolon
+	// maybe not really good
+	if !p.currTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	// Return the statement after all.
+	return stmt
+}
+
+func (p *Parser) parseConstStatement() ast.Statement {
+	stmt := &ast.ConstStatement{Token: p.currToken} // this looks like recursive leaves
+	// This function should be called only on
+	// statements which start with 'const'
 
 	// After, requires an identifier, otherwise fails
 	if !p.expectPeek(token.IDENT) {
@@ -114,4 +150,14 @@ func (p *Parser) peekError(t token.TokenType) {
 	// Append error
 	msg := fmt.Sprintf("Expected token to be %s, got %s instead", t, p.peekToken.Type)
 	p.errors = append(p.errors, errors.New(msg))
+}
+
+func (p *Parser) parseReturnStatement() ast.Statement {
+	stmt := &ast.ReturnStatement{Token: p.currToken}
+	p.nextToken()
+
+	for !p.currTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt
 }

@@ -9,22 +9,24 @@ import (
 )
 
 type Parser struct {
-	l         *lexer.Lexer
+	lex       *lexer.Lexer
 	currToken token.Token
 	peekToken token.Token
 	errors    []error
 }
 
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l, errors: []error{}}
+	p := &Parser{lex: l, errors: []error{}}
+	// To populate both, curr and peek tokens
 	p.nextToken()
 	p.nextToken()
 	return p
 }
 
 func (p *Parser) nextToken() {
+	// Advance both pointers
 	p.currToken = p.peekToken
-	p.peekToken = p.l.NextToken()
+	p.peekToken = p.lex.NextToken()
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -51,21 +53,34 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseLetStatement() ast.Statement {
-	stmt := &ast.LetStatement{Token: p.currToken}
+	stmt := &ast.LetStatement{Token: p.currToken} // this looks like recursive leaves
+	// This function should be called only on
+	// statements which start with 'let'
+
+	// After, requires an identifier, otherwise fails
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
 
+	// Assigns an Identifier node to this statement,
+	// with the Token: token.Identifier
+	// and Value: p.currToken.Literal,
+	// which is the identifier name
 	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
 
+	// After the identifier, requires a = sign,
+	// if it does not exist, break and fail.
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
 
+	// Keep reading until there is a semicolon
+	// maybe not really good
 	if !p.currTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
+	// Return the statement after all.
 	return stmt
 }
 
@@ -79,19 +94,24 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
+		// if peekToken is of the expected type
+		// keep going and return true
 		p.nextToken()
 		return true
 	} else {
+		// Otherwise append error to parser errors
 		p.peekError(t)
 		return false
 	}
 }
 
 func (p *Parser) Errors() []error {
+	// Public getter for errors
 	return p.errors
 }
 
 func (p *Parser) peekError(t token.TokenType) {
+	// Append error
 	msg := fmt.Sprintf("Expected token to be %s, got %s instead", t, p.peekToken.Type)
 	p.errors = append(p.errors, errors.New(msg))
 }

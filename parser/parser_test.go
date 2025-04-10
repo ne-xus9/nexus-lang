@@ -131,3 +131,7 @@ func TestConstStatement(t *testing.T) {
 		}
 	}
 }
+
+func TestSimpleExpressions(t *testing.T) {
+
+}

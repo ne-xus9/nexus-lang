@@ -106,10 +106,7 @@ func TestReturnStatement(t *testing.T) {
 }
 
 func TestIdentifiers(t *testing.T) {
-	input := "foobar;"
-
-	lex := lexer.New(input)
-	parser := New(lex)
+	parser := New(lexer.New("foobar;"))
 
 	prog := parser.ParseProgram()
 	checkParserErrors(t, parser)
@@ -134,5 +131,33 @@ func TestIdentifiers(t *testing.T) {
 
 	if ident.TokenLiteral() != "foobar" {
 		t.Errorf("ident.TokenLiteral not %s. got=%s", "foobar", ident.TokenLiteral())
+	}
+}
+
+func TestIntegerLiteralExpression(t *testing.T) {
+	parser := New(lexer.New("5;"))
+	prog := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if len(prog.Statements) != 1 {
+		t.Fatalf("prog.Statements has wrong length. got=%d", len(prog.Statements))
+	}
+
+	stmt, ok := prog.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("prog.Statements[0] is not an ast.ExpressionStatement. got=%T", prog.Statements[0])
+	}
+
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expression)
+	}
+
+	if literal.Value != 5 {
+		t.Errorf("Literal.Value is not %d. got=%d", 5, literal.Value)
+	}
+
+	if literal.TokenLiteral() != "5" {
+		t.Errorf("Literal.TokenLiteral is not %s. got=%s", "5", literal.TokenLiteral())
 	}
 }

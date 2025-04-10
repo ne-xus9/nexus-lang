@@ -6,6 +6,7 @@ import (
 	"nexus/ast"
 	"nexus/lexer"
 	"nexus/token"
+	"strconv"
 )
 
 const (
@@ -38,6 +39,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixFns = make(map[token.TokenType]PrefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
+	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 
 	// To populate both, curr and peek tokens
 	p.nextToken()
@@ -183,4 +185,17 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	lit := &ast.IntegerLiteral{Token: p.currToken}
+
+	value, err := strconv.ParseInt(p.currToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("Cannot parse %q as integer", p.currToken)
+		p.errors = append(p.errors, errors.New(msg))
+	}
+	lit.Value = value
+
+	return lit
 }

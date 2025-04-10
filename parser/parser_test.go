@@ -18,10 +18,10 @@ func TestLetStatements(t *testing.T) {
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 	if program == nil {
-		t.FailNow()
+		t.Fatalf("Could not build a program with input '%s'", input)
 	}
 	if len(program.Statements) != 3 {
-		t.FailNow()
+		t.Fatalf("Wrong number of statements. got=%d", len(program.Statements))
 	}
 
 	tests := []struct {
@@ -105,33 +105,34 @@ func TestReturnStatement(t *testing.T) {
 	}
 }
 
-func TestConstStatement(t *testing.T) {
-	input := `
-		const MINUTES = 5;
-		const SECRET_NUM = 20;
-		const __PRIVATE_CONST = 0;
-	`
+func TestIdentifiers(t *testing.T) {
+	input := "foobar;"
+
 	lex := lexer.New(input)
 	parser := New(lex)
+
 	prog := parser.ParseProgram()
-
 	checkParserErrors(t, parser)
-	if len(prog.Statements) != 3 {
-		t.Fatalf("prog.Statements does not contain 3 statements. got=%d", len(prog.Statements))
+
+	if len(prog.Statements) != 1 {
+		t.Fatalf("prog.Statements has wrong length. got=%d", len(prog.Statements))
 	}
 
-	for _, val := range prog.Statements {
-		stmt, ok := val.(*ast.ConstStatement)
-		if !ok {
-			t.Errorf("stmt not *ast.ConstStatement. got=%T", stmt)
-		}
-
-		if stmt.TokenLiteral() != "const" {
-			t.Errorf("stmt.TokenLiteral not 'const'. got=%q", stmt.TokenLiteral())
-		}
+	stmt, ok := prog.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("prog.Statements[0] is not an ast.ExpressionStatement. got=%T", prog.Statements[0])
 	}
-}
 
-func TestSimpleExpressions(t *testing.T) {
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	if !ok {
+		t.Fatalf("stmt is not an ast.Identifier. got=%T", stmt.Expression)
+	}
 
+	if ident.Value != "foobar" {
+		t.Fatalf("ident.Value is not foobar. got=%s", ident.Value)
+	}
+
+	if ident.TokenLiteral() != "foobar" {
+		t.Errorf("ident.TokenLiteral not %s. got=%s", "foobar", ident.TokenLiteral())
+	}
 }

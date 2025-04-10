@@ -8,19 +8,46 @@ import (
 	"nexus/token"
 )
 
+const (
+	_ int = iota
+	LOWEST
+	EQUALS      // ==
+	LESSGREATER // > <
+	SUM         // +
+	PRODUCT     // *
+	PREFIX      // - !
+	CALL        // foo()
+)
+
+type (
+	PrefixParseFn func() ast.Expression
+	InfixParseFn  func(ast.Expression) ast.Expression
+)
+
 type Parser struct {
 	lex       *lexer.Lexer
 	currToken token.Token
 	peekToken token.Token
 	errors    []error
+	prefixFns map[token.TokenType]PrefixParseFn
+	infixFns  map[token.TokenType]InfixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{lex: l, errors: []error{}}
+
+	p.prefixFns = make(map[token.TokenType]PrefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
+
 	// To populate both, curr and peek tokens
 	p.nextToken()
 	p.nextToken()
+
 	return p
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
 }
 
 func (p *Parser) nextToken() {
@@ -47,16 +74,14 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.currToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
-	case token.CON:
-		return p.parseConstStatement()
 	case token.RET:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
-func (p *Parser) parseLetStatement() ast.Statement {
+func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.currToken} // this looks like recursive leaves
 	// This function should be called only on
 	// statements which start with 'let'
@@ -80,39 +105,7 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 	// Keep reading until there is a semicolon
 	// maybe not really good
-	if !p.currTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-
-	// Return the statement after all.
-	return stmt
-}
-
-func (p *Parser) parseConstStatement() ast.Statement {
-	stmt := &ast.ConstStatement{Token: p.currToken} // this looks like recursive leaves
-	// This function should be called only on
-	// statements which start with 'const'
-
-	// After, requires an identifier, otherwise fails
-	if !p.expectPeek(token.IDENT) {
-		return nil
-	}
-
-	// Assigns an Identifier node to this statement,
-	// with the Token: token.Identifier
-	// and Value: p.currToken.Literal,
-	// which is the identifier name
-	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
-
-	// After the identifier, requires a = sign,
-	// if it does not exist, break and fail.
-	if !p.expectPeek(token.ASSIGN) {
-		return nil
-	}
-
-	// Keep reading until there is a semicolon
-	// maybe not really good
-	if !p.currTokenIs(token.SEMICOLON) {
+	for !p.currTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
@@ -159,5 +152,35 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 	for !p.currTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
+	return stmt
+}
+
+func (p *Parser) registerPrefix(t token.TokenType, fn PrefixParseFn) {
+	p.prefixFns[t] = fn
+}
+
+func (p *Parser) registerInfix(t token.TokenType, fn InfixParseFn) {
+	p.infixFns[t] = fn
+}
+
+func (p *Parser) parseExpression(prec int) ast.Expression {
+	prefix := p.prefixFns[p.currToken.Type]
+	if prefix == nil {
+		return nil
+	}
+	leftExp := prefix()
+
+	return leftExp
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.currToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
 	return stmt
 }

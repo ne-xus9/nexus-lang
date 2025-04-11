@@ -135,11 +135,16 @@ func TestIdentifiers(t *testing.T) {
 }
 
 func TestIntegerLiteralExpression(t *testing.T) {
-	parser := New(lexer.New("5;"))
+	input := `
+		5;
+		foobar;
+		x;
+	`
+	parser := New(lexer.New(input))
 	prog := parser.ParseProgram()
 	checkParserErrors(t, parser)
 
-	if len(prog.Statements) != 1 {
+	if len(prog.Statements) != 3 {
 		t.Fatalf("prog.Statements has wrong length. got=%d", len(prog.Statements))
 	}
 

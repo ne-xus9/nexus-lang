@@ -8,6 +8,7 @@ import "nexus/ast"
 func (p *Parser) ParseExpression(prec int) ast.Expression {
 	prefix := p.prefixFns[p.CurrentToken.Type]
 	if prefix == nil {
+		p.noPrefixParseFnError(p.CurrentToken.Type)
 		return nil
 	}
 	leftExp := prefix()

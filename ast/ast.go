@@ -180,13 +180,13 @@ func (in *InfixExpression) expressionNode() {}
 func (in *InfixExpression) TokenLiteral() string {
 	return in.Token.Literal
 }
-func (pe *InfixExpression) AsString() string {
+func (in *InfixExpression) AsString() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(pe.Left.AsString())
-	out.WriteString(" " + pe.Operator + " ")
-	out.WriteString(pe.Right.AsString())
+	out.WriteString(in.Left.AsString())
+	out.WriteString(" " + in.Operator + " ")
+	out.WriteString(in.Right.AsString())
 	out.WriteString(")")
 
 	return out.String()

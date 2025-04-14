@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"nexus/ast"
 	"nexus/token"
 )
@@ -11,12 +12,13 @@ import (
 func (p *Parser) ParseExpression(prec int) ast.Expression {
 	prefix := p.prefixFns[p.CurrentToken.Type]
 	if prefix == nil {
+		fmt.Println(p.CurrentToken.Type)
 		p.noPrefixParseFnError(p.CurrentToken.Type)
 		return nil
 	}
 	leftExp := prefix()
 
-	if !p.PeekTokenIs(token.SEMICOLON) && prec < p.peekPrecedence() {
+	for !p.PeekTokenIs(token.SEMICOLON) && prec < p.peekPrecedence() {
 		infix := p.infixFns[p.PeekToken.Type]
 		if infix == nil {
 			return leftExp

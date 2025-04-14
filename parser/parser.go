@@ -3,7 +3,6 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"log"
 	"nexus/ast"
 	"nexus/lexer"
 	"nexus/token"
@@ -44,15 +43,14 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.SUBS, p.ParsePrefixExpression)
 
 	p.infixFns = make(map[token.TokenType]InfixParseFn)
-	// p.registerInfix(token.PLUS, p.parseInfixExpression)
-	// p.registerInfix(token.SUBS, p.parseInfixExpression)
-	// p.registerInfix(token.MULT, p.parseInfixExpression)
-	// p.registerInfix(token.DIV, p.parseInfixExpression)
-	// p.registerInfix(token.EQ, p.parseInfixExpression)
-	// p.registerInfix(token.NEQ, p.parseInfixExpression)
-	// p.registerInfix(token.LT, p.parseInfixExpression)
-	// p.registerInfix(token.GT, p.parseInfixExpression)
-	p.infixFns[token.PLUS] = p.parseInfixExpression
+	p.registerInfix(token.PLUS, p.parseInfixExpression)
+	p.registerInfix(token.SUBS, p.parseInfixExpression)
+	p.registerInfix(token.MULT, p.parseInfixExpression)
+	p.registerInfix(token.DIV, p.parseInfixExpression)
+	p.registerInfix(token.EQ, p.parseInfixExpression)
+	p.registerInfix(token.NEQ, p.parseInfixExpression)
+	p.registerInfix(token.LT, p.parseInfixExpression)
+	p.registerInfix(token.GT, p.parseInfixExpression)
 
 	// To populate both, curr and peek tokens
 	p.nextToken()
@@ -109,7 +107,6 @@ func (p *Parser) registerInfix(t token.TokenType, fn InfixParseFn) {
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
-	log.Fatal(msg)
 	p.errors = append(p.errors, errors.New(msg))
 }
 
@@ -157,26 +154,6 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	}
 	prec := p.currPrecedence()
 	p.nextToken()
-	expression.Right = p.parseExpression(prec)
+	expression.Right = p.ParseExpression(prec)
 	return expression
-}
-
-func (p *Parser) parseExpression(prec int) ast.Expression {
-	prefix := p.prefixFns[p.CurrentToken.Type]
-	if prefix == nil {
-
-		p.noPrefixParseFnError(p.CurrentToken.Type)
-		return nil
-	}
-
-	leftExp := prefix()
-	if !p.PeekTokenIs(token.SEMICOLON) && prec < p.peekPrecedence() {
-		infix := p.infixFns[p.PeekToken.Type]
-		if infix == nil {
-			return leftExp
-		}
-		p.nextToken()
-		leftExp = infix(leftExp)
-	}
-	return leftExp
 }

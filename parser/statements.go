@@ -43,6 +43,9 @@ func (p *Parser) ParseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
+	p.nextToken()
+	stmt.Value = p.ParseExpression(LOWEST)
+
 	// Keep reading until there is a semicolon
 	// maybe not really good
 	for !p.CurrentTokenIs(token.SEMICOLON) {
@@ -58,6 +61,8 @@ func (p *Parser) ParseLetStatement() *ast.LetStatement {
 func (p *Parser) ParseReturnStatement() ast.Statement {
 	stmt := &ast.ReturnStatement{Token: p.CurrentToken}
 	p.nextToken()
+
+	stmt.ReturnValue = p.ParseExpression(LOWEST)
 
 	for !p.CurrentTokenIs(token.SEMICOLON) {
 		p.nextToken()

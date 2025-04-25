@@ -202,7 +202,7 @@ func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
 func (b *Boolean) AsString() string     { return b.Token.Literal }
 
 type IfExpression struct {
-	Token       token.Token // The 'if' token
+	Token       token.Token // Actual 'if' token
 	Condition   Expression
 	Consequence *BlockStatement
 	Alternative *BlockStatement
@@ -210,7 +210,7 @@ type IfExpression struct {
 
 func (ie *IfExpression) expressionNode()      {}
 func (ie *IfExpression) TokenLiteral() string { return ie.Token.Literal }
-func (ie *IfExpression) String() string {
+func (ie *IfExpression) AsString() string {
 	var out bytes.Buffer
 	out.WriteString("if")
 	out.WriteString(ie.Condition.AsString())
@@ -224,13 +224,13 @@ func (ie *IfExpression) String() string {
 }
 
 type BlockStatement struct {
-	Token      token.Token // the { token
+	Token      token.Token // Actual '{' token
 	Statements []Statement
 }
 
 func (bs *BlockStatement) statementNode()       {}
 func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
-func (bs *BlockStatement) String() string {
+func (bs *BlockStatement) AsString() string {
 	var out bytes.Buffer
 	for _, s := range bs.Statements {
 		out.WriteString(s.AsString())

@@ -14,7 +14,7 @@ var (
 func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalProgram(node)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 	case *ast.IntegerLiteral:
@@ -28,12 +28,27 @@ func Eval(node ast.Node) object.Object {
 		left := Eval(node.Left)
 		right := Eval(node.Right)
 		return evalInfix(node.Operator, left, right)
-	case *ast.BlockStatement:
-		return evalStatements(node.Statements)
 	case *ast.IfExpression:
 		return evalIf(node)
+	case *ast.ReturnStatement:
+		return &object.ReturnValue{Value: Eval(node.ReturnValue)}
+	case *ast.BlockStatement:
+		return evalBlockStatement(node)
 	}
 	return nil
+}
+
+func evalProgram(p *ast.Program) object.Object {
+	var r object.Object
+
+	for _, stmt := range p.Statements {
+		r = Eval(stmt)
+
+		if rv, ok := r.(*object.ReturnValue); ok {
+			return rv.Value
+		}
+	}
+	return r
 }
 
 func evalStatements(stmts []ast.Statement) object.Object {
@@ -41,9 +56,26 @@ func evalStatements(stmts []ast.Statement) object.Object {
 
 	for _, stmt := range stmts {
 		result = Eval(stmt)
+		if rv, ok := result.(*object.ReturnValue); ok {
+			return rv.Value
+		}
 	}
 
 	return result
+}
+
+func evalBlockStatement(block *ast.BlockStatement) object.Object {
+	var r object.Object
+
+	for _, stmt := range block.Statements {
+		r = Eval(stmt)
+
+		if r != nil && r.Type() == object.RETURN {
+			return r
+		}
+	}
+
+	return r
 }
 
 func nativeBooleanObject(i bool) *object.Boolean {
